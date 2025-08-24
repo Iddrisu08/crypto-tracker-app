@@ -1,0 +1,306 @@
+# ===============================================
+# CRYPTO TRACKER ALERTING RULES
+# ===============================================
+# Alert rules for monitoring crypto tracker application health,
+# performance, and business metrics.
+
+groups:
+  # -----------------------------------------------
+  # APPLICATION HEALTH ALERTS
+  # -----------------------------------------------
+  - name: crypto-tracker.health
+    interval: 30s
+    rules:
+      # Backend service down
+      - alert: CryptoTrackerBackendDown
+        expr: up{job="crypto-tracker-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: crypto-tracker-backend
+          team: platform
+        annotations:
+          summary: "Crypto Tracker Backend is down"
+          description: "The Crypto Tracker backend service has been down for more than 1 minute"
+          runbook_url: "https://runbooks.crypto-tracker.com/backend-down"
+          dashboard_url: "https://grafana.crypto-tracker.com/d/backend-overview"
+
+      # Frontend service down
+      - alert: CryptoTrackerFrontendDown
+        expr: up{job="crypto-tracker-frontend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: crypto-tracker-frontend
+          team: platform
+        annotations:
+          summary: "Crypto Tracker Frontend is down"
+          description: "The Crypto Tracker frontend service has been down for more than 2 minutes"
+
+      # Database connection issues
+      - alert: DatabaseConnectionFailure
+        expr: up{job="postgres-exporter"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: postgresql
+          team: database
+        annotations:
+          summary: "Database connection failure"
+          description: "Unable to connect to PostgreSQL database"
+
+      # Redis cache unavailable
+      - alert: RedisCacheUnavailable
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          service: redis
+          team: platform
+        annotations:
+          summary: "Redis cache is unavailable"
+          description: "Redis cache has been unavailable for more than 1 minute"
+
+  # -----------------------------------------------
+  # PERFORMANCE ALERTS
+  # -----------------------------------------------
+  - name: crypto-tracker.performance
+    interval: 30s
+    rules:
+      # High response time
+      - alert: HighAPIResponseTime
+        expr: |
+          (
+            histogram_quantile(0.95, 
+              rate(flask_http_request_duration_seconds_bucket{job="crypto-tracker-backend"}[5m])
+            ) > 2.0
+          )
+        for: 5m
+        labels:
+          severity: warning
+          service: crypto-tracker-backend
+          team: backend
+        annotations:
+          summary: "High API response time detected"
+          description: "95th percentile API response time is {{ $value }}s (threshold: 2.0s)"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(flask_http_request_exceptions_total{job="crypto-tracker-backend"}[5m]) /
+            rate(flask_http_request_total{job="crypto-tracker-backend"}[5m])
+          ) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          service: crypto-tracker-backend
+          team: backend
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # Database query slow
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95,
+            rate(postgresql_query_duration_seconds_bucket[5m])
+          ) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+          team: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile query time is {{ $value }}s (threshold: 1.0s)"
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: |
+          (
+            rate(container_cpu_usage_seconds_total{name=~"crypto_tracker_.*"}[5m]) * 100
+          ) > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: "{{ $labels.name }}"
+          team: platform
+        annotations:
+          summary: "High CPU usage on {{ $labels.name }}"
+          description: "CPU usage is {{ $value }}% (threshold: 80%)"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            container_memory_usage_bytes{name=~"crypto_tracker_.*"} /
+            container_spec_memory_limit_bytes{name=~"crypto_tracker_.*"} * 100
+          ) > 85
+        for: 10m
+        labels:
+          severity: warning
+          service: "{{ $labels.name }}"
+          team: platform
+        annotations:
+          summary: "High memory usage on {{ $labels.name }}"
+          description: "Memory usage is {{ $value }}% (threshold: 85%)"
+
+  # -----------------------------------------------
+  # BUSINESS LOGIC ALERTS
+  # -----------------------------------------------
+  - name: crypto-tracker.business
+    interval: 60s
+    rules:
+      # External API failures
+      - alert: CoinGeckoAPIFailure
+        expr: |
+          (
+            rate(external_api_requests_total{api="coingecko",status!~"2.."}[10m]) /
+            rate(external_api_requests_total{api="coingecko"}[10m])
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: external-api
+          team: backend
+        annotations:
+          summary: "CoinGecko API failure rate is high"
+          description: "CoinGecko API failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # Price data staleness
+      - alert: StalePriceData
+        expr: |
+          (time() - crypto_price_last_updated_timestamp) > 300
+        for: 0m
+        labels:
+          severity: warning
+          service: crypto-tracker-backend
+          team: backend
+        annotations:
+          summary: "Cryptocurrency price data is stale"
+          description: "Price data hasn't been updated for {{ $value }} seconds (threshold: 300s)"
+
+      # Low user activity
+      - alert: LowUserActivity
+        expr: |
+          rate(user_actions_total[1h]) < 10
+        for: 2h
+        labels:
+          severity: info
+          service: crypto-tracker
+          team: product
+        annotations:
+          summary: "Low user activity detected"
+          description: "User activity rate is {{ $value }} actions/hour (threshold: 10/hour)"
+
+      # Failed portfolio calculations
+      - alert: PortfolioCalculationFailures
+        expr: |
+          rate(portfolio_calculation_failures_total[5m]) > 0.01
+        for: 2m
+        labels:
+          severity: warning
+          service: crypto-tracker-backend
+          team: backend
+        annotations:
+          summary: "Portfolio calculation failures detected"
+          description: "Portfolio calculation failure rate: {{ $value }} failures/second"
+
+  # -----------------------------------------------
+  # INFRASTRUCTURE ALERTS  
+  # -----------------------------------------------
+  - name: crypto-tracker.infrastructure
+    interval: 60s
+    rules:
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            (node_filesystem_avail_bytes{mountpoint="/", fstype!="tmpfs"} * 100) /
+            node_filesystem_size_bytes{mountpoint="/", fstype!="tmpfs"}
+          ) < 10
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is {{ $value }}% (threshold: 10%)"
+
+      # High load average
+      - alert: HighLoadAverage
+        expr: node_load15 > 2.0
+        for: 15m
+        labels:
+          severity: warning
+          service: system
+          team: infrastructure
+        annotations:
+          summary: "High load average on {{ $labels.instance }}"
+          description: "15-minute load average is {{ $value }} (threshold: 2.0)"
+
+      # Container restart frequency
+      - alert: ContainerRestartingTooOften
+        expr: |
+          increase(container_restart_total{name=~"crypto_tracker_.*"}[1h]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          service: "{{ $labels.name }}"
+          team: platform
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting too often"
+          description: "Container has restarted {{ $value }} times in the last hour"
+
+  # -----------------------------------------------
+  # SECURITY ALERTS
+  # -----------------------------------------------
+  - name: crypto-tracker.security
+    interval: 60s
+    rules:
+      # Unusual traffic patterns
+      - alert: UnusualTrafficSpike
+        expr: |
+          (
+            rate(flask_http_request_total{job="crypto-tracker-backend"}[5m]) >
+            (rate(flask_http_request_total{job="crypto-tracker-backend"}[1h]) * 3)
+          )
+        for: 2m
+        labels:
+          severity: warning
+          service: crypto-tracker-backend
+          team: security
+        annotations:
+          summary: "Unusual traffic spike detected"
+          description: "Current request rate is 3x higher than the hourly average"
+
+      # High 4xx error rate (potential attacks)
+      - alert: HighClientErrorRate
+        expr: |
+          (
+            rate(flask_http_request_total{job="crypto-tracker-backend",status=~"4.."}[5m]) /
+            rate(flask_http_request_total{job="crypto-tracker-backend"}[5m])
+          ) > 0.20
+        for: 5m
+        labels:
+          severity: warning
+          service: crypto-tracker-backend
+          team: security
+        annotations:
+          summary: "High client error rate detected"
+          description: "4xx error rate is {{ $value | humanizePercentage }} (threshold: 20%)"
+
+      # Failed authentication attempts
+      - alert: HighFailedAuthRate
+        expr: |
+          rate(auth_failures_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: crypto-tracker-backend
+          team: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failure rate: {{ $value }} failures/second (threshold: 5/second)"

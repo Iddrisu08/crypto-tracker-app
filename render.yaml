@@ -1,0 +1,191 @@
+# ===============================================
+# RENDER INFRASTRUCTURE AS CODE CONFIGURATION
+# ===============================================
+# Complete infrastructure definition for crypto tracker deployment
+
+services:
+  # -----------------------------------------------
+  # WEB SERVICES
+  # -----------------------------------------------
+  
+  # FRONTEND - React Application
+  - type: web
+    name: crypto-tracker-frontend
+    runtime: node
+    plan: starter  # $7/month
+    region: oregon  # Choose: oregon, frankfurt, singapore
+    
+    # Build Configuration
+    buildCommand: |
+      cd crypto-tracker-frontend
+      npm ci
+      npm run build
+    
+    # Serve Configuration
+    staticPublishPath: ./crypto-tracker-frontend/dist
+    
+    # Custom Headers for Security
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=()
+    
+    # Routes Configuration
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # BACKEND - Flask API
+  - type: web
+    name: crypto-tracker-backend
+    runtime: python
+    plan: starter  # $7/month
+    region: oregon
+    
+    # Build Configuration
+    buildCommand: |
+      cd crypto-tracker-backend
+      pip install -r requirements.txt
+    
+    # Start Command
+    startCommand: |
+      cd crypto-tracker-backend
+      gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 60 app:app
+    
+    # Health Check
+    healthCheckPath: /api/health
+    
+    # Environment Variables
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: ENV_NAME
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: crypto-tracker-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: crypto-tracker-cache
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://crypto-tracker-frontend.onrender.com
+      - key: COINBASE_API_URL
+        value: https://api.coinbase.com/v2
+      - key: LOG_LEVEL
+        value: INFO
+      - key: ENABLE_METRICS
+        value: "true"
+
+# -----------------------------------------------
+# DATABASES
+# -----------------------------------------------
+databases:
+  - name: crypto-tracker-db
+    plan: starter  # $7/month - 1GB storage
+    region: oregon
+    databaseName: crypto_tracker
+    user: crypto_user
+    
+    # PostgreSQL version
+    ipAllowList: []  # Empty = allow all (Render services only)
+
+  - name: crypto-tracker-cache
+    type: redis
+    plan: starter  # $7/month - 30MB memory
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+# -----------------------------------------------
+# CRON JOBS (Background Tasks)
+# -----------------------------------------------
+jobs:
+  # Price Update Job
+  - type: cron
+    name: price-updater
+    runtime: python
+    plan: starter
+    schedule: "*/5 * * * *"  # Every 5 minutes
+    
+    buildCommand: |
+      cd crypto-tracker-backend
+      pip install -r requirements.txt
+    
+    startCommand: |
+      cd crypto-tracker-backend
+      python -c "
+      from app import update_crypto_prices
+      update_crypto_prices()
+      print('Price update completed')
+      "
+    
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: crypto-tracker-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: crypto-tracker-cache
+          property: connectionString
+
+  # Database Backup Job
+  - type: cron
+    name: database-backup
+    runtime: python
+    plan: starter
+    schedule: "0 2 * * *"  # Daily at 2 AM UTC
+    
+    buildCommand: |
+      cd crypto-tracker-backend
+      pip install -r requirements.txt
+    
+    startCommand: |
+      cd crypto-tracker-backend
+      python scripts/backup_database.py
+    
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: crypto-tracker-db
+          property: connectionString
+      - key: BACKUP_STORAGE_URL
+        value: ""  # Configure with external storage
+
+# -----------------------------------------------
+# BLUEPRINTS (Preview Deployments)
+# -----------------------------------------------
+previewsEnabled: true
+
+blueprints:
+  - name: feature-preview
+    plan: starter
+    
+    # Environment Variables for Preview
+    envVars:
+      - key: FLASK_ENV
+        value: development
+      - key: ENV_NAME
+        value: preview
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: DEBUG
+        value: "true"

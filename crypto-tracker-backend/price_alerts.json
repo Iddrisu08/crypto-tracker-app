@@ -1,0 +1,12 @@
+[
+  {
+    "id": "bitcoin_120000.0_above_1753116821",
+    "coin": "bitcoin",
+    "target_price": 120000.0,
+    "condition": "above",
+    "email": "test@example.com",
+    "created_at": "2025-07-21T12:53:41.640497",
+    "enabled": true,
+    "description": "Bitcoin above $120K"
+  }
+]

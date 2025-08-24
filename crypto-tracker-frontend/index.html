@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/icons/icon-192x192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crypto Investment Tracker</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2196F3" />
+    <meta name="description" content="Professional cryptocurrency portfolio tracking and analytics" />
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="CryptoTracker" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <!-- Windows PWA Support -->
+    <meta name="msapplication-TileImage" content="/icons/icon-192x192.png" />
+    <meta name="msapplication-TileColor" content="#2196F3" />
+    
+    <!-- Additional PWA Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      // Register service worker for PWA functionality
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('✅ PWA: Service Worker registered', registration.scope);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // New version available
+                      console.log('🔄 PWA: New version available');
+                      if (confirm('New version available! Reload to update?')) {
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                        window.location.reload();
+                      }
+                    }
+                  });
+                }
+              });
+            })
+            .catch((error) => {
+              console.error('❌ PWA: Service Worker registration failed', error);
+            });
+            
+          // Listen for service worker updates
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            window.location.reload();
+          });
+        });
+      }
+      
+      // PWA Install Prompt
+      let deferredPrompt;
+      
+      window.addEventListener('beforeinstallprompt', (event) => {
+        console.log('📱 PWA: Install prompt available');
+        // Prevent the mini-infobar from appearing
+        event.preventDefault();
+        // Store the event for later use
+        deferredPrompt = event;
+        
+        // Show custom install button (we'll add this to the UI later)
+        window.dispatchEvent(new CustomEvent('pwa-installable'));
+      });
+      
+      window.addEventListener('appinstalled', () => {
+        console.log('🎉 PWA: App installed successfully');
+        deferredPrompt = null;
+      });
+      
+      // Expose install function globally
+      window.installPWA = () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('✅ PWA: Install accepted');
+            } else {
+              console.log('❌ PWA: Install declined');
+            }
+            deferredPrompt = null;
+          });
+        }
+      };
+    </script>
+  </body>
+</html>

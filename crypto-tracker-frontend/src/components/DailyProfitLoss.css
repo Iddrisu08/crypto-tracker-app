@@ -1,0 +1,16 @@
+.daily-profit-container {
+    margin-top: 2rem;
+    padding: 1rem;
+  }
+  
+  .card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+  }
+  
+
+
+
+  

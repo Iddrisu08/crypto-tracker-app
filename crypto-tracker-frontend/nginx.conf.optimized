@@ -1,0 +1,277 @@
+# ===============================================
+# OPTIMIZED NGINX CONFIGURATION
+# ===============================================
+# Production-grade nginx setup for React SPA with:
+# - Security headers and optimizations
+# - Compression and caching
+# - Performance tuning
+# - SPA routing support
+
+# Run nginx as non-root user for security
+user nginx-app;
+
+# Worker processes - typically set to number of CPU cores
+worker_processes auto;
+
+# Error log location and level
+error_log /var/log/nginx/error.log warn;
+
+# PID file location
+pid /var/run/nginx.pid;
+
+# Worker connection limits and optimization
+events {
+    worker_connections 1024;
+    use epoll;  # Efficient I/O method on Linux
+    multi_accept on;  # Accept multiple connections at once
+}
+
+http {
+    # MIME types and default type
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # -----------------------------------------------
+    # LOGGING CONFIGURATION
+    # -----------------------------------------------
+    
+    # Custom log format with more details
+    log_format detailed '$remote_addr - $remote_user [$time_local] '
+                       '"$request" $status $body_bytes_sent '
+                       '"$http_referer" "$http_user_agent" '
+                       '$request_time $upstream_response_time';
+
+    # Access log location
+    access_log /var/log/nginx/access.log detailed;
+
+    # -----------------------------------------------
+    # PERFORMANCE OPTIMIZATIONS
+    # -----------------------------------------------
+
+    # Efficient file serving
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+
+    # Connection timeout settings
+    keepalive_timeout 65;
+    keepalive_requests 100;
+
+    # Buffer sizes for better performance
+    client_body_buffer_size 128k;
+    client_max_body_size 10m;
+    client_header_buffer_size 1k;
+    large_client_header_buffers 4 4k;
+    output_buffers 1 32k;
+    postpone_output 1460;
+
+    # -----------------------------------------------
+    # COMPRESSION
+    # -----------------------------------------------
+    
+    # Enable gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 10240;
+    gzip_proxied expired no-cache no-store private must-revalidate max-age=0;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/javascript
+        application/json
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml
+        font/woff
+        font/woff2;
+
+    # -----------------------------------------------
+    # SECURITY HEADERS
+    # -----------------------------------------------
+
+    # Hide nginx version
+    server_tokens off;
+
+    # Security headers (added to all responses)
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Download-Options "noopen" always;
+    add_header X-Permitted-Cross-Domain-Policies "none" always;
+
+    # Content Security Policy (adjust based on your needs)
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https: wss:; object-src 'none';" always;
+
+    # -----------------------------------------------
+    # RATE LIMITING
+    # -----------------------------------------------
+
+    # Rate limiting zones
+    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=general:10m rate=1r/s;
+
+    # Connection limiting
+    limit_conn_zone $binary_remote_addr zone=addr:10m;
+
+    # -----------------------------------------------
+    # SERVER CONFIGURATION
+    # -----------------------------------------------
+
+    server {
+        listen 3000 default_server;
+        listen [::]:3000 default_server;
+        
+        # Server name (use your domain in production)
+        server_name localhost;
+
+        # Document root
+        root /usr/share/nginx/html;
+        index index.html;
+
+        # Connection limiting
+        limit_conn addr 10;
+
+        # -----------------------------------------------
+        # STATIC ASSET OPTIMIZATION
+        # -----------------------------------------------
+
+        # Cache static assets aggressively
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+            add_header X-Content-Type-Options "nosniff" always;
+            
+            # Enable compression for these files
+            gzip_static on;
+            
+            # Security headers for static assets
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+        }
+
+        # -----------------------------------------------
+        # API PROXY (if backend is separate)
+        # -----------------------------------------------
+
+        # Proxy API requests to backend
+        location /api/ {
+            # Rate limiting for API
+            limit_req zone=api burst=20 nodelay;
+            
+            # Proxy headers
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            
+            # Proxy timeout settings
+            proxy_connect_timeout 30s;
+            proxy_send_timeout 30s;
+            proxy_read_timeout 30s;
+            
+            # Buffer settings
+            proxy_buffering on;
+            proxy_buffer_size 4k;
+            proxy_buffers 8 4k;
+            
+            # Proxy to backend (update URL as needed)
+            proxy_pass http://backend:5001/api/;
+            
+            # Handle proxy errors
+            proxy_intercept_errors on;
+            error_page 502 503 504 /50x.html;
+        }
+
+        # -----------------------------------------------
+        # SPA ROUTING SUPPORT
+        # -----------------------------------------------
+
+        # Handle client-side routing (React Router)
+        location / {
+            # Apply rate limiting
+            limit_req zone=general burst=10 nodelay;
+            
+            # Try files, fallback to index.html for SPA routing
+            try_files $uri $uri/ /index.html;
+            
+            # Cache HTML files for short duration
+            expires 1h;
+            add_header Cache-Control "public, must-revalidate";
+            
+            # Security headers for HTML
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header X-Content-Type-Options "nosniff" always;
+        }
+
+        # -----------------------------------------------
+        # HEALTH CHECK ENDPOINT
+        # -----------------------------------------------
+
+        # Health check for load balancers
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+
+        # -----------------------------------------------
+        # ERROR PAGES
+        # -----------------------------------------------
+
+        # Custom error pages
+        error_page 404 /404.html;
+        error_page 500 502 503 504 /50x.html;
+
+        location = /50x.html {
+            root /usr/share/nginx/html;
+        }
+
+        location = /404.html {
+            root /usr/share/nginx/html;
+        }
+
+        # -----------------------------------------------
+        # SECURITY RESTRICTIONS
+        # -----------------------------------------------
+
+        # Deny access to hidden files
+        location ~ /\. {
+            deny all;
+            access_log off;
+            log_not_found off;
+        }
+
+        # Deny access to backup files
+        location ~ ~$ {
+            deny all;
+            access_log off;
+            log_not_found off;
+        }
+
+        # Prevent access to source maps in production
+        location ~ \.map$ {
+            deny all;
+            access_log off;
+            log_not_found off;
+        }
+
+        # -----------------------------------------------
+        # MONITORING AND DEBUGGING
+        # -----------------------------------------------
+
+        # Nginx status page (restrict access in production)
+        location /nginx_status {
+            stub_status on;
+            access_log off;
+            allow 127.0.0.1;
+            allow 10.0.0.0/8;
+            allow 172.16.0.0/12;
+            allow 192.168.0.0/16;
+            deny all;
+        }
+    }
+}

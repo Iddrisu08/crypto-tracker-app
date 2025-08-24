@@ -1,0 +1,32 @@
+.daily-stat-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 1rem;
+    margin: 0.5rem;
+    width: 250px;
+    text-align: center;
+    transition: transform 0.2s ease;
+  }
+  
+  .daily-stat-card:hover {
+    transform: translateY(-3px);
+  }
+  
+  .card-label {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+  }
+  
+  .card-value {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  
+  .card-timestamp {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 0.5rem;
+  }
+  

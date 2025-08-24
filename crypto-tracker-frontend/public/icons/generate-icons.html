@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate PWA Icons</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        // Generate simple crypto icons
+        function generateIcon(size) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#2196F3');
+            gradient.addColorStop(1, '#1976D2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Bitcoin symbol
+            ctx.fillStyle = '#FFD700';
+            ctx.font = `bold ${size * 0.6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('₿', size/2, size/2);
+            
+            // Download
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Generate all sizes
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        sizes.forEach(size => generateIcon(size));
+        
+        document.body.innerHTML = '<h2>Icons generated! Check your downloads folder.</h2>';
+    </script>
+</body>
+</html>

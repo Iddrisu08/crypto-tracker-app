@@ -1,0 +1,323 @@
+/* Base Skeleton Animation */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary, #f0f0f0) 25%,
+    var(--bg-tertiary, #e0e0e0) 50%,
+    var(--bg-secondary, #f0f0f0) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite ease-in-out;
+  display: block;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Skeleton Card */
+.skeleton-card {
+  background: var(--bg-primary, white);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  min-height: 200px; /* Prevent layout shift */
+}
+
+.skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.skeleton-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeleton-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Chart Skeleton */
+.skeleton-chart {
+  margin-top: 20px;
+}
+
+.skeleton-chart-bars {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  height: 200px;
+  margin-bottom: 12px;
+  padding: 0 20px;
+}
+
+.skeleton-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+/* Table Skeleton */
+.skeleton-table {
+  background: var(--bg-primary, white);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.skeleton-table-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.skeleton-table-row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-table-header {
+  background: var(--bg-secondary, #f5f5f5);
+  font-weight: 600;
+}
+
+/* Analytics Skeleton */
+.skeleton-analytics {
+  background: var(--bg-primary, white);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.skeleton-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.skeleton-analytics-card {
+  background: var(--bg-secondary, #f8f9fa);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.skeleton-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.skeleton-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Form Skeleton */
+.skeleton-form {
+  background: var(--bg-primary, white);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.skeleton-form-header {
+  margin-bottom: 20px;
+}
+
+.skeleton-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skeleton-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.skeleton-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* List Item Skeleton */
+.skeleton-list-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.skeleton-list-item:last-child {
+  border-bottom: none;
+}
+
+.skeleton-list-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Page Skeleton */
+.skeleton-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.skeleton-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.skeleton-header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.skeleton-page-content {
+  display: grid;
+  gap: 24px;
+}
+
+.skeleton-table-container {
+  margin-top: 24px;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 75%
+  );
+  background-size: 200% 100%;
+}
+
+[data-theme="dark"] .skeleton-card,
+[data-theme="dark"] .skeleton-table,
+[data-theme="dark"] .skeleton-analytics,
+[data-theme="dark"] .skeleton-form {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .skeleton-analytics-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .skeleton-table-header {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .skeleton-page {
+    padding: 1rem;
+  }
+  
+  .skeleton-page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .skeleton-analytics-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .skeleton-form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .skeleton-table-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .skeleton-chart-bars {
+    height: 150px;
+    padding: 0 10px;
+  }
+  
+  .skeleton-chart-labels {
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .skeleton-card,
+  .skeleton-analytics,
+  .skeleton-form {
+    padding: 16px;
+  }
+  
+  .skeleton-analytics-card {
+    padding: 16px;
+  }
+  
+  .skeleton-table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+  }
+  
+  .skeleton-list-item {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  
+  .skeleton-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .skeleton-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+}

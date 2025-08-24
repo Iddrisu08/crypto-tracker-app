@@ -1,0 +1,124 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - heading "Crypto Investment Tracker" [level=1]
+  - img
+  - text: $0
+  - img
+  - text: $0
+  - button "Refresh All Data":
+    - img
+    - text: Refresh All Data
+  - button "Switch to Dark Mode":
+    - img
+- main:
+  - heading "Historical Charts" [level=2]
+  - button "Refresh Charts":
+    - img
+    - text: Refresh Charts
+  - heading "Portfolio Value Over Time" [level=3]
+  - paragraph: Loading chart...
+  - heading "Profit/Loss Trend" [level=3]
+  - paragraph: Loading chart...
+  - heading "Manual Transactions" [level=2]
+  - paragraph: Add buy/sell transactions to track your manual trades with real-time profit/loss calculations
+  - button "Add Manual Transaction":
+    - img
+    - text: Add Manual Transaction
+  - heading "Transaction History" [level=2]
+  - button "Refresh History":
+    - img
+    - text: Refresh History
+  - paragraph: No manual transactions found.
+  - img
+  - heading "Price Alerts" [level=3]
+  - paragraph: Get notified when crypto prices hit your targets
+  - button "New Alert":
+    - img
+    - text: New Alert
+  - img
+  - heading "No Price Alerts" [level=4]
+  - paragraph: Create your first alert to get notified when prices change
+  - button "Create Alert":
+    - img
+    - text: Create Alert
+  - paragraph:
+    - strong: "📧 Email Configuration Required:"
+    - text: "Price alerts require email configuration in your environment. Set the following environment variables:"
+  - code: EMAIL_ALERTS_ENABLED=true, EMAIL_USER, EMAIL_PASSWORD, SMTP_SERVER, SMTP_PORT
+  - text: 📊
+  - heading "Advanced Portfolio Analytics" [level=3]
+  - paragraph: Professional risk metrics and performance analysis
+  - button "📈 Refresh"
+  - heading "⚠️ Risk Metrics" [level=4]
+  - text: Daily Volatility 15.4% Annual Volatility 89.2% Sharpe Ratio 1.85 Good Max Drawdown 8.7% Value at Risk (95%) -2.3% ($-150.5)
+  - heading "📈 Performance Analysis" [level=4]
+  - text: Avg Daily Return 0.45% Annualized Return 164.25% Total Return 42.8% Tracking Period 30 days
+  - heading "⚖️ Portfolio Allocation" [level=4]
+  - text: "BTC 65.5% ETH 34.5% Diversification Score 0.452 Higher is better (max: 0.5)"
+  - heading "🎯 Benchmark Performance" [level=4]
+  - text: Portfolio 42.8% vs BTC Only +4.6% vs ETH Only +13.9% vs 50/50 Mix +9.25%
+  - heading "🏆 Cryptocurrency Performance" [level=4]
+  - text: 🥇 Best Performer BTC +38.2% +$1750.3 🥈 Runner Up ETH +28.9% +$912.84
+  - heading "📅 Time Performance Analysis" [level=4]
+  - text: 🎯 Best Day 2025-01-18 +8.4% +$420.15 BTC surge to $105K 📉 Worst Day 2025-01-12 -3.2% $-180.45 Market correction 🔥 Current Streak 5 days winning +12.3%
+  - heading "💡 Investment Efficiency" [level=4]
+  - text: BTC Avg Buy Price $89,750 +30.9% vs current ETH Avg Buy Price $3,200 +17.8% vs current Cost Averaging Score 8.2/10 Excellent timing Market Timing Score 7.5/10 Good entry points
+  - heading "🎯 Smart Recommendations" [level=4]
+  - text: ⚖️Rebalance
+  - paragraph: "Consider rebalancing: BTC is now 65.5% of portfolio (target: 60%)"
+  - paragraph:
+    - strong: "Action:"
+    - text: Sell $150 BTC or buy $100 ETH
+  - paragraph:
+    - strong: "Impact:"
+    - text: Reduce concentration risk
+  - text: 🚀Opportunity
+  - paragraph: ETH showing strong momentum (+5.2% this week)
+  - paragraph:
+    - strong: "Action:"
+    - text: Consider increasing ETH allocation
+  - paragraph:
+    - strong: "Impact:"
+    - text: Potential upside capture
+  - text: ⚠️Risk
+  - paragraph: Portfolio volatility is high (89.2% annualized)
+  - paragraph:
+    - strong: "Action:"
+    - text: Consider dollar-cost averaging
+  - paragraph:
+    - strong: "Impact:"
+    - text: Reduce timing risk
+  - paragraph: 📊 Analytics calculated using 30 days of portfolio data. Risk metrics are estimates and past performance doesn't guarantee future results.
+  - heading "Export Data" [level=3]
+  - paragraph: Download your portfolio data as CSV files for spreadsheet analysis
+  - heading "Portfolio Summary" [level=4]
+  - paragraph: Current holdings, investments, and P&L
+  - button "Download CSV":
+    - img
+    - text: Download CSV
+  - heading "Transaction History" [level=4]
+  - paragraph: All manual buy/sell transactions
+  - button "Download CSV":
+    - img
+    - text: Download CSV
+  - heading "30-Day History" [level=4]
+  - paragraph: Portfolio value over last 30 days
+  - button "Download CSV":
+    - img
+    - text: Download CSV
+  - heading "90-Day History" [level=4]
+  - paragraph: Portfolio value over last 90 days
+  - button "Download CSV":
+    - img
+    - text: Download CSV
+  - heading "Full Year History" [level=4]
+  - paragraph: Portfolio value over last 365 days
+  - button "Download CSV":
+    - img
+    - text: Download CSV
+  - paragraph:
+    - strong: "Note:"
+    - text: CSV files can be opened in Excel, Google Sheets, or any spreadsheet application.
+```

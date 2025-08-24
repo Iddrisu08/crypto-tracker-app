@@ -1,0 +1,259 @@
+# ===============================================
+# OPTIMIZED MULTI-STAGE DOCKERFILE - FRONTEND
+# ===============================================
+# Production-grade React application container with:
+# - Multi-stage builds for minimal final image
+# - Environment-aware builds
+# - Security optimizations
+# - Performance enhancements
+
+# -----------------------------------------------
+# STAGE 1: DEPENDENCY INSTALLER
+# -----------------------------------------------
+FROM node:18-alpine3.18 AS dependencies
+
+# Build arguments for environment-specific builds
+ARG TARGET_ENV=production
+ARG NODE_ENV=production
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Metadata labels
+LABEL maintainer="Crypto Tracker Team" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.title="Crypto Tracker Frontend" \
+      org.opencontainers.image.description="React frontend for crypto portfolio tracking"
+
+# Install system dependencies for build process
+RUN apk add --no-cache \
+    curl \
+    git \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files for dependency caching
+COPY package*.json ./
+
+# Install dependencies with npm ci for faster, reliable builds
+RUN npm ci --only=production --no-audit --no-fund \
+    && npm cache clean --force
+
+# -----------------------------------------------
+# STAGE 2: APPLICATION BUILDER
+# -----------------------------------------------
+FROM node:18-alpine3.18 AS builder
+
+# Build arguments (must be redeclared in each stage)
+ARG TARGET_ENV=production
+ARG NODE_ENV=production
+
+# Set environment variables for build optimization
+ENV NODE_ENV=${NODE_ENV} \
+    CI=true \
+    GENERATE_SOURCEMAP=false
+
+WORKDIR /app
+
+# Copy dependencies from previous stage
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY package*.json ./
+
+# Copy source code
+COPY . .
+
+# Copy environment-specific configuration
+RUN if [ -f ".env.${TARGET_ENV}" ]; then \
+        cp ".env.${TARGET_ENV}" .env; \
+        echo "✅ Loaded environment config: .env.${TARGET_ENV}"; \
+    else \
+        echo "⚠️ Environment file not found: .env.${TARGET_ENV}"; \
+    fi
+
+# Build application with optimizations
+RUN npm run build \
+    && echo "✅ Build completed successfully" \
+    && ls -la dist/
+
+# -----------------------------------------------
+# STAGE 3: NGINX RUNTIME
+# -----------------------------------------------
+FROM nginx:1.25-alpine AS runtime
+
+# Build arguments (must be redeclared in each stage)
+ARG TARGET_ENV=production
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Runtime environment variables
+ENV TARGET_ENV=${TARGET_ENV}
+
+# Install runtime dependencies and security updates
+RUN apk add --no-cache \
+    curl \
+    dumb-init \
+    && apk upgrade --no-cache \
+    && rm -rf /var/cache/apk/*
+
+# Create non-root user for nginx
+RUN addgroup -g 1001 nginx-app \
+    && adduser -D -u 1001 -G nginx-app nginx-app
+
+# Copy built application from builder stage
+COPY --from=builder --chown=nginx-app:nginx-app /app/dist /usr/share/nginx/html
+
+# Copy optimized nginx configuration
+COPY --chown=nginx-app:nginx-app nginx.conf.optimized /etc/nginx/nginx.conf
+COPY --chown=nginx-app:nginx-app nginx-site.conf /etc/nginx/conf.d/default.conf
+
+# Create nginx directories with proper permissions
+RUN mkdir -p /var/cache/nginx/client_temp \
+    && mkdir -p /var/log/nginx \
+    && mkdir -p /var/run \
+    && chown -R nginx-app:nginx-app /var/cache/nginx \
+    && chown -R nginx-app:nginx-app /var/log/nginx \
+    && chown -R nginx-app:nginx-app /var/run \
+    && chown -R nginx-app:nginx-app /usr/share/nginx/html
+
+# Switch to non-root user
+USER nginx-app
+
+# Expose port
+EXPOSE 3000
+
+# Environment-aware health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f -H "Accept: text/html" http://localhost:3000/ || exit 1
+
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
+
+# -----------------------------------------------
+# STAGE 4: DEVELOPMENT VARIANT
+# -----------------------------------------------
+FROM node:18-alpine3.18 AS development
+
+# Build arguments
+ARG TARGET_ENV=development
+
+# Development environment variables
+ENV NODE_ENV=development \
+    TARGET_ENV=${TARGET_ENV} \
+    CHOKIDAR_USEPOLLING=true
+
+WORKDIR /app
+
+# Install development dependencies including dev tools
+RUN apk add --no-cache \
+    curl \
+    git \
+    bash \
+    vim \
+    && rm -rf /var/cache/apk/*
+
+# Copy package files and install all dependencies (including dev)
+COPY package*.json ./
+RUN npm install --include=dev \
+    && npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Copy development environment configuration
+RUN if [ -f ".env.${TARGET_ENV}" ]; then \
+        cp ".env.${TARGET_ENV}" .env; \
+        echo "✅ Loaded development config: .env.${TARGET_ENV}"; \
+    fi
+
+# Expose Vite dev server port
+EXPOSE 5173
+
+# Development health check (more lenient)
+HEALTHCHECK --interval=60s --timeout=30s --start-period=60s --retries=2 \
+    CMD curl -f http://localhost:5173/ || exit 1
+
+# Start Vite development server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+# -----------------------------------------------
+# STAGE 5: TESTING VARIANT
+# -----------------------------------------------
+FROM node:18-alpine3.18 AS testing
+
+# Build arguments
+ARG TARGET_ENV=testing
+
+# Testing environment variables
+ENV NODE_ENV=test \
+    TARGET_ENV=${TARGET_ENV} \
+    CI=true
+
+WORKDIR /app
+
+# Install testing dependencies
+RUN apk add --no-cache \
+    curl \
+    git \
+    && rm -rf /var/cache/apk/*
+
+# Copy package files and install all dependencies
+COPY package*.json ./
+RUN npm ci --include=dev \
+    && npm cache clean --force
+
+# Copy source code and test files
+COPY . .
+
+# Copy test configuration
+RUN if [ -f ".env.${TARGET_ENV}" ]; then \
+        cp ".env.${TARGET_ENV}" .env; \
+    fi
+
+# Install browser dependencies for e2e tests
+RUN npx playwright install --with-deps chromium || echo "Playwright install skipped"
+
+# No health check needed for testing
+# Testing command
+CMD ["npm", "run", "test:run"]
+
+# -----------------------------------------------
+# BUILD COMMANDS AND OPTIMIZATION NOTES
+# -----------------------------------------------
+# 
+# Build for different targets:
+# 
+# Development (with hot reload):
+#   docker build --target development -t crypto-frontend:dev .
+# 
+# Production (nginx):
+#   docker build --target runtime -t crypto-frontend:prod .
+# 
+# Testing:
+#   docker build --target testing -t crypto-frontend:test .
+#
+# With environment and build metadata:
+#   docker build --target runtime \
+#                --build-arg TARGET_ENV=production \
+#                --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+#                --build-arg VCS_REF=$(git rev-parse HEAD) \
+#                -t crypto-frontend:latest .
+#
+# Multi-architecture build:
+#   docker buildx build --platform linux/amd64,linux/arm64 \
+#                       --target runtime \
+#                       -t crypto-frontend:latest .
+#
+# Build optimization tips:
+# - Use .dockerignore to exclude unnecessary files
+# - Layer caching: dependencies change less than source code
+# - Multi-stage builds: smaller final images
+# - Security: non-root users, minimal base images
+# - Health checks: container orchestration integration
