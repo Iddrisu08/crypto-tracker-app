@@ -46,7 +46,7 @@ jobs:
       # STEP 4: Install frontend dependencies
       - name: 📦 Install Frontend Dependencies
         working-directory: ./crypto-tracker-frontend
-        run: npm ci
+        run: npm ci --legacy-peer-deps --legacy-peer-deps
 
       # STEP 5: Install backend dependencies
       - name: 📦 Install Backend Dependencies
@@ -131,7 +131,7 @@ jobs:
       # INSTALL DEPENDENCIES
       - name: 📦 Install Frontend Dependencies
         working-directory: ./crypto-tracker-frontend
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: 📦 Install Backend Dependencies
         working-directory: ./crypto-tracker-backend
