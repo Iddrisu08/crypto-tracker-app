@@ -214,12 +214,16 @@ jobs:
           # Download and install Render CLI
           curl -fsSL https://cli.render.com/install | sh
           echo "$HOME/.render/bin" >> $GITHUB_PATH
+          # Verify installation
+          export PATH="$HOME/.render/bin:$PATH"
+          which render || echo "❌ Render CLI not found in PATH"
       
       # Authenticate with Render
       - name: 🔐 Authenticate with Render
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
+          export PATH="$HOME/.render/bin:$PATH"
           render auth login --api-key $RENDER_API_KEY
           echo "✅ Authenticated with Render"
       
