@@ -208,28 +208,29 @@ jobs:
         with:
           fetch-depth: 0
       
-      # Install Render CLI
-      - name: 🔧 Install Render CLI
-        run: |
-          # Download and install Render CLI
-          curl -fsSL https://cli.render.com/install | sh
-          # Add to PATH for current step
-          export PATH="$HOME/.render/bin:$PATH"
-          # Verify installation works
-          $HOME/.render/bin/render --version || echo "❌ Render CLI installation failed"
-          # Add to GitHub PATH for subsequent steps
-          echo "$HOME/.render/bin" >> $GITHUB_PATH
-      
-      # Authenticate with Render
-      - name: 🔐 Authenticate with Render
+      # Check Render API connectivity
+      - name: 🔧 Check Render API Access
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
         run: |
-          # Use absolute path instead of relying on PATH
-          $HOME/.render/bin/render auth login --api-key $RENDER_API_KEY
-          echo "✅ Authenticated with Render"
+          # Test Render API connectivity using curl instead of CLI
+          echo "🔍 Testing Render API connection..."
+          
+          response=$(curl -s -w "%{http_code}" -o /tmp/render_response.json \
+            -H "Authorization: Bearer ${RENDER_API_KEY}" \
+            -H "Accept: application/json" \
+            https://api.render.com/v1/services)
+          
+          if [ "$response" = "200" ]; then
+            echo "✅ Render API connection successful"
+            echo "📊 Services found: $(cat /tmp/render_response.json | grep -o '"id"' | wc -l)"
+          else
+            echo "❌ Render API connection failed (HTTP $response)"
+            cat /tmp/render_response.json || echo "No response body"
+            exit 1
+          fi
       
-      # Deploy to Render using Blueprint
+      # Deploy to Render using REST API
       - name: 🚀 Deploy to Render
         id: deployment
         env:
@@ -237,6 +238,10 @@ jobs:
           DEPLOYMENT_ENV: ${{ needs.pre-deployment-checks.outputs.deployment_env }}
         run: |
           echo "🚀 Starting deployment to $DEPLOYMENT_ENV..."
+          echo "ℹ️  Note: For initial deployment, please use the Render web dashboard to create a Blueprint"
+          echo "📱 Go to: https://dashboard.render.com"
+          echo "🔗 Repository: ${{ github.repository }}"
+          echo "✅ All configuration files are ready for deployment"
           
           # Deploy using render.yaml blueprint
           if [ "$DEPLOYMENT_ENV" = "production" ]; then
