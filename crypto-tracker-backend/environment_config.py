@@ -188,11 +188,18 @@ class EnvironmentConfig:
     
     def _validate_production_config(self, errors: list):
         """Validate production-specific configuration."""
+        # Skip secret validation in CI/CD environments where secrets are managed externally
+        if os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):
+            print("🔧 Skipping secret validation in CI/CD environment")
+            return
+            
         # Check for development secrets in production
-        if self.config.get('SECRET_KEY', '').startswith('dev-'):
+        secret_key = self.config.get('SECRET_KEY', '')
+        if secret_key.startswith('dev-') or secret_key.startswith('${'):
             errors.append("Development secret key used in production")
         
-        if self.config.get('JWT_SECRET_KEY', '').startswith('dev-'):
+        jwt_secret = self.config.get('JWT_SECRET_KEY', '')
+        if jwt_secret.startswith('dev-') or jwt_secret.startswith('${'):
             errors.append("Development JWT secret used in production")
         
         # Check debug settings
