@@ -1,52 +1,23 @@
 services:
-  # FRONTEND - React Application
   - type: web
     name: crypto-tracker-frontend
     runtime: static
-    plan: starter
-    region: oregon
-    rootDir: crypto-tracker-frontend
-    buildCommand: npm ci --legacy-peer-deps && npm run build
-    staticPublishPath: ./dist
-
-  # BACKEND - Flask API  
+    buildCommand: cd crypto-tracker-frontend && npm ci --legacy-peer-deps && npm run build
+    staticPublishPath: ./crypto-tracker-frontend/dist
+    
   - type: web
-    name: crypto-tracker-backend
+    name: crypto-tracker-backend  
     runtime: python
-    plan: starter
-    region: oregon
-    rootDir: crypto-tracker-backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 60 app:app
-    healthCheckPath: /health
+    buildCommand: cd crypto-tracker-backend && pip install -r requirements.txt
+    startCommand: cd crypto-tracker-backend && gunicorn --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: FLASK_ENV
         value: production
-      - key: ENV_NAME
-        value: production
       - key: DATABASE_URL
         fromDatabase:
-          name: crypto-tracker-db
+          name: crypto-db
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: crypto-tracker-cache
-          property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
-      - key: JWT_SECRET_KEY
-        generateValue: true
-      - key: CORS_ORIGINS
-        value: https://crypto-tracker-frontend.onrender.com
-
+          
 databases:
-  - name: crypto-tracker-db
+  - name: crypto-db
     plan: starter
-    region: oregon
-    databaseName: crypto_tracker
-    user: crypto_user
-
-  - name: crypto-tracker-cache
-    plan: starter
-    region: oregon

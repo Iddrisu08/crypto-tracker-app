@@ -1,0 +1,44 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Test frontend build
+        working-directory: ./crypto-tracker-frontend
+        run: |
+          npm ci --legacy-peer-deps
+          npm run build
+          
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Test backend
+        working-directory: ./crypto-tracker-backend
+        run: |
+          pip install -r requirements.txt
+          python -c "import app; print('Backend imports OK')"
+          
+      - name: Deployment Ready
+        run: |
+          echo "✅ Application is ready for deployment!"
+          echo "📱 Go to: https://dashboard.render.com"
+          echo "🔗 Repository: ${{ github.repository }}"
+          echo "📋 Click: New > Blueprint"
