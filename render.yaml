@@ -2,14 +2,16 @@ services:
   - type: web
     name: crypto-tracker-frontend
     runtime: static
-    buildCommand: cd crypto-tracker-frontend && npm ci --legacy-peer-deps && npm run build
-    staticPublishPath: ./crypto-tracker-frontend/dist
+    rootDir: crypto-tracker-frontend
+    buildCommand: npm ci --legacy-peer-deps && npm run build
+    staticPublishPath: ./dist
     
   - type: web
     name: crypto-tracker-backend  
     runtime: python
-    buildCommand: cd crypto-tracker-backend && pip install -r requirements.txt
-    startCommand: cd crypto-tracker-backend && gunicorn --bind 0.0.0.0:$PORT app:app
+    rootDir: crypto-tracker-backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: FLASK_ENV
         value: production
