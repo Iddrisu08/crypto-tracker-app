@@ -1,0 +1,84 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: crypto-tracker-db
+    environment:
+      POSTGRES_DB: crypto_tracker
+      POSTGRES_USER: crypto_user
+      POSTGRES_PASSWORD: crypto_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - crypto-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crypto_user -d crypto_tracker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: crypto-tracker-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - crypto-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./crypto-tracker-backend
+      dockerfile: Dockerfile
+    container_name: crypto-tracker-backend
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://crypto_user:crypto_password@postgres:5432/crypto_tracker
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-production-secret-key-change-this
+      - JWT_SECRET_KEY=your-jwt-secret-key-change-this
+      - CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crypto-network
+    volumes:
+      - ./crypto-tracker-backend/instance:/app/instance
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./crypto-tracker-frontend
+      dockerfile: Dockerfile
+    container_name: crypto-tracker-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - crypto-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  crypto-network:
+    driver: bridge
