@@ -16,14 +16,12 @@ docker-compose up -d
 ### Access Your App
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:5000
-- **Database**: localhost:5432
 
 ## Architecture
 
-- **Frontend**: React + Vite (Multi-stage Docker build)
-- **Backend**: Flask + PostgreSQL + Redis
-- **Database**: PostgreSQL 15
-- **Cache**: Redis 7
+- **Frontend**: React + Vite (Multi-stage Docker build)  
+- **Backend**: Flask API with SQLite (local file storage)
+- **No external dependencies** - runs completely self-contained
 
 ## Docker Configuration
 
@@ -34,9 +32,7 @@ docker-compose up -d
 
 ### Services
 - `frontend`: React app on port 3000
-- `backend`: Flask API on port 5000  
-- `postgres`: Database on port 5432
-- `redis`: Cache on port 6379
+- `backend`: Flask API on port 5000 with SQLite storage
 
 ## Production Deployment
 
