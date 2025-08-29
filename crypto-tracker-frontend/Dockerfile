@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for React Frontend
-FROM node:18-alpine AS builder
+FROM node:20.19-alpine AS builder
 
 # Set working directory
 WORKDIR /app

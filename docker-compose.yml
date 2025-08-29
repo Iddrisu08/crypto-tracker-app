@@ -7,11 +7,11 @@ services:
     container_name: crypto-tracker-backend
     environment:
       - FLASK_ENV=production
-      - SECRET_KEY=your-production-secret-key-change-this
-      - JWT_SECRET_KEY=your-jwt-secret-key-change-this
+      - SECRET_KEY=JEKIEEoW_uMfO97AQbDGhaGSMK0LnLxBcN7DVWzpFOA
+      - JWT_SECRET_KEY=xT9EeosDjKCpOyf8eaNPJJie8LYGLr3g5Ht-99_Y2ew
       - CORS_ORIGINS=http://localhost:3000
     ports:
-      - "5000:5000"
+      - "5002:5000"
     networks:
       - crypto-network
     volumes:

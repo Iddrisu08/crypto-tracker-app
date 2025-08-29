@@ -50,5 +50,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD ./venv/bin/python -c "import requests; requests.get('http://localhost:5000/health', timeout=5)" || exit 1
 
-# Start the application
-CMD ["./venv/bin/gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "app:app"]
+# Start the application with better configuration
+CMD ["./venv/bin/gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "--max-requests", "1000", "--max-requests-jitter", "100", "app:app"]
