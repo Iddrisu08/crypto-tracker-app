@@ -1,6 +1,7 @@
 services:
   # Backend API
   backend:
+    image: iddris/crypto-tracker-backend:v1
     build:
       context: ./crypto-tracker-backend
       dockerfile: Dockerfile
@@ -20,6 +21,7 @@ services:
 
   # Frontend
   frontend:
+    image: iddris/crypto-tracker-frontend:v1
     build:
       context: ./crypto-tracker-frontend
       dockerfile: Dockerfile
