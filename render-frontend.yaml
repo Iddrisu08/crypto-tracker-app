@@ -1,0 +1,40 @@
+# Render Frontend Service Configuration  
+services:
+  - type: web
+    name: crypto-tracker-frontend
+    runtime: docker
+    dockerfilePath: ./crypto-tracker-frontend/Dockerfile
+    dockerContext: ./crypto-tracker-frontend
+    
+    # Deployment Settings
+    region: oregon  # or singapore, frankfurt
+    plan: free     # free, starter, standard, pro  
+    branch: main
+    autoDeploy: true
+    
+    # Build Configuration
+    dockerBuildArgs:
+      - key: VITE_API_URL
+        value: https://crypto-tracker-backend.onrender.com
+        
+    # Health & Scaling
+    numInstances: 1
+    
+    # Build Settings
+    buildCommand: ""
+    startCommand: ""  # Uses Dockerfile CMD
+    
+    # Headers for PWA and Security
+    headers:
+      - path: /manifest.json
+        name: Content-Type
+        value: application/manifest+json
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /service-worker.js
+        name: Cache-Control
+        value: no-cache

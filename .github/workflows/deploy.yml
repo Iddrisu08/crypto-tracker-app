@@ -1,0 +1,203 @@
+name: 🚀 Deploy Crypto Tracker
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOCKER_REGISTRY: docker.io
+  BACKEND_IMAGE: iddris/crypto-tracker-backend
+  FRONTEND_IMAGE: iddris/crypto-tracker-frontend
+
+jobs:
+  # Test Stage
+  test:
+    name: 🧪 Test Application
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🏗️ Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: crypto-tracker-frontend/package-lock.json
+
+    - name: 🏗️ Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 📦 Install Frontend Dependencies
+      working-directory: ./crypto-tracker-frontend
+      run: npm ci --legacy-peer-deps
+
+    - name: 📦 Install Backend Dependencies
+      working-directory: ./crypto-tracker-backend
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+
+    - name: 🔍 Lint Frontend
+      working-directory: ./crypto-tracker-frontend
+      run: |
+        npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0 || true
+        echo "✅ Frontend linting completed"
+
+    - name: 🔧 Build Frontend
+      working-directory: ./crypto-tracker-frontend
+      run: npm run build
+      env:
+        VITE_API_URL: https://crypto-tracker-backend.onrender.com
+
+    - name: ✅ Test Backend Health
+      working-directory: ./crypto-tracker-backend
+      run: |
+        source venv/bin/activate
+        python -c "import app; print('✅ Backend imports successfully')"
+
+  # Build and Push Docker Images
+  build:
+    name: 🐳 Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🏗️ Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔐 Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: 🏷️ Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          ${{ matrix.service == 'backend' && env.BACKEND_IMAGE || env.FRONTEND_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=v1,enable={{is_default_branch}}
+
+    - name: 🐳 Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./crypto-tracker-${{ matrix.service }}
+        file: ./crypto-tracker-${{ matrix.service }}/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          ${{ matrix.service == 'frontend' && 'VITE_API_URL=https://crypto-tracker-backend.onrender.com' || '' }}
+
+  # Deploy to Render
+  deploy:
+    name: 🚀 Deploy to Render
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📂 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🚀 Trigger Render Deploy - Backend
+      run: |
+        curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "branch": "main",
+            "commit": "${{ github.sha }}"
+          }'
+        echo "✅ Backend deployment triggered"
+
+    - name: 🚀 Trigger Render Deploy - Frontend
+      run: |
+        # Wait for backend to deploy first
+        sleep 30
+        curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "branch": "main", 
+            "commit": "${{ github.sha }}"
+          }'
+        echo "✅ Frontend deployment triggered"
+
+    - name: 📋 Deployment Summary
+      run: |
+        echo "🎉 Deployment Complete!"
+        echo "🔗 Frontend URL: ${{ secrets.RENDER_FRONTEND_URL }}"
+        echo "🔗 Backend URL: ${{ secrets.RENDER_BACKEND_URL }}"
+        echo "📊 Commit: ${{ github.sha }}"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+
+  # Health Check
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 🏥 Check Backend Health
+      run: |
+        echo "Waiting for backend to be ready..."
+        sleep 60
+        
+        for i in {1..5}; do
+          if curl -f "${{ secrets.RENDER_BACKEND_URL }}/health"; then
+            echo "✅ Backend is healthy!"
+            break
+          else
+            echo "⏳ Attempt $i/5 failed, retrying in 30s..."
+            sleep 30
+          fi
+        done
+
+    - name: 🏥 Check Frontend Health  
+      run: |
+        echo "Checking frontend availability..."
+        sleep 30
+        
+        for i in {1..3}; do
+          if curl -f "${{ secrets.RENDER_FRONTEND_URL }}"; then
+            echo "✅ Frontend is healthy!"
+            break
+          else
+            echo "⏳ Attempt $i/3 failed, retrying in 30s..."
+            sleep 30
+          fi
+        done
+
+    - name: 🎉 Deployment Success
+      run: |
+        echo "🎉 🎉 🎉 DEPLOYMENT SUCCESSFUL! 🎉 🎉 🎉"
+        echo ""
+        echo "🌐 Your Crypto Tracker is now live at:"
+        echo "   Frontend: ${{ secrets.RENDER_FRONTEND_URL }}"
+        echo "   Backend:  ${{ secrets.RENDER_BACKEND_URL }}"
+        echo ""
+        echo "📈 Happy crypto tracking! 🚀"

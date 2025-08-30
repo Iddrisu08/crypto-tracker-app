@@ -1,0 +1,44 @@
+# Render Backend Service Configuration
+services:
+  - type: web
+    name: crypto-tracker-backend
+    runtime: docker
+    dockerfilePath: ./crypto-tracker-backend/Dockerfile
+    dockerContext: ./crypto-tracker-backend
+    
+    # Deployment Settings
+    region: oregon  # or singapore, frankfurt
+    plan: free     # free, starter, standard, pro
+    branch: main
+    autoDeploy: true
+    
+    # Health & Scaling
+    healthCheckPath: /health
+    numInstances: 1
+    
+    # Environment Variables
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: app.py
+      - key: PORT
+        value: 5000
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://crypto-tracker-frontend.onrender.com,http://localhost:3000,https://localhost:3000
+      - key: PYTHONPATH
+        value: /app
+        
+    # Persistent Storage for SQLite
+    disk:
+      name: crypto-data
+      mountPath: /app/instance
+      sizeGB: 1
+      
+    # Build Settings
+    buildCommand: ""
+    startCommand: ""  # Uses Dockerfile CMD
