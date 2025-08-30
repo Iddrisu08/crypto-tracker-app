@@ -27,7 +27,7 @@ limiter = Limiter(
 )
 
 # Secure CORS configuration - only allow frontend origin
-CORS(app, origins=["http://localhost:5173", "http://localhost:5174"], 
+CORS(app, origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"], 
      methods=["GET", "POST", "PUT", "DELETE"],
      allow_headers=["Content-Type", "Authorization", "expires", "cache-control", "pragma"])
 
