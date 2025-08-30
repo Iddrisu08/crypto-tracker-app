@@ -35,30 +35,6 @@ services:
     plan: free
     branch: main
     buildCommand: ""
-    dockerBuildArgs:
+    envVars:
       - key: VITE_API_URL
         value: https://crypto-tracker-backend.onrender.com
-
-# Optional: Background Jobs for price updates
-  # - type: worker
-  #   name: price-updater
-  #   runtime: docker
-  #   dockerfilePath: ./crypto-tracker-backend/Dockerfile
-  #   dockerContext: ./crypto-tracker-backend
-  #   region: oregon
-  #   plan: free
-  #   branch: main
-  #   startCommand: python scripts/price_updater.py
-  #   envVars:
-  #     - fromService:
-  #         type: web
-  #         name: crypto-tracker-backend
-  #         envVarKey: DATABASE_URL
-
-databases:
-  # Optional: PostgreSQL database (if you want to upgrade from SQLite)
-  # - name: crypto-tracker-db
-  #   databaseName: crypto_tracker
-  #   user: crypto_user
-  #   region: oregon
-  #   plan: free

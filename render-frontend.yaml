@@ -12,8 +12,8 @@ services:
     branch: main
     autoDeploy: true
     
-    # Build Configuration
-    dockerBuildArgs:
+    # Environment Variables (passed as build args)
+    envVars:
       - key: VITE_API_URL
         value: https://crypto-tracker-backend.onrender.com
         

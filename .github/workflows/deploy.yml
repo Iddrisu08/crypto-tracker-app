@@ -9,8 +9,8 @@ on:
 
 env:
   DOCKER_REGISTRY: docker.io
-  BACKEND_IMAGE: iddris/crypto-tracker-backend
-  FRONTEND_IMAGE: iddris/crypto-tracker-frontend
+  BACKEND_IMAGE: iddris/crypto-tracker-backend:v1
+  FRONTEND_IMAGE: iddris/crypto-tracker-frontend:v1
 
 jobs:
   # Test Stage
