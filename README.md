@@ -228,9 +228,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🚀 Live Demo
 
-- **Frontend**: https://crypto-tracker-frontend.onrender.com
-- **Backend API**: https://crypto-tracker-backend.onrender.com
-- **Health Check**: https://crypto-tracker-backend.onrender.com/health
+- **Frontend**: https://crypto-tracker-frontend-g4e9.onrender.com
+- **Backend API**: https://crypto-tracker-backend-8x7x.onrender.com
+- **Health Check**: https://crypto-tracker-backend-8x7x.onrender.com/health
 
 ---
 
