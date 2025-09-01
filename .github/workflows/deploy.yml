@@ -9,8 +9,8 @@ on:
 
 env:
   DOCKER_REGISTRY: docker.io
-  BACKEND_IMAGE: iddris/crypto-tracker-backend:v1
-  FRONTEND_IMAGE: iddris/crypto-tracker-frontend:v1
+  BACKEND_IMAGE: iddris/crypto-tracker-backend
+  FRONTEND_IMAGE: iddris/crypto-tracker-frontend
 
 jobs:
   # Test Stage
@@ -87,31 +87,19 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: 🏷️ Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: |
-          ${{ matrix.service == 'backend' && env.BACKEND_IMAGE || env.FRONTEND_IMAGE }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-          type=raw,value=v1,enable={{is_default_branch}}
-
     - name: 🐳 Build and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: ./crypto-tracker-${{ matrix.service }}
         file: ./crypto-tracker-${{ matrix.service }}/Dockerfile
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags: |
+          ${{ matrix.service == 'backend' && env.BACKEND_IMAGE || env.FRONTEND_IMAGE }}:latest
+          ${{ matrix.service == 'backend' && env.BACKEND_IMAGE || env.FRONTEND_IMAGE }}:v1
         cache-from: type=gha
         cache-to: type=gha,mode=max
         build-args: |
-          ${{ matrix.service == 'frontend' && 'VITE_API_URL=https://crypto-tracker-backend.onrender.com' || '' }}
+          ${{ matrix.service == 'frontend' && 'VITE_API_URL=https://crypto-tracker-backend-8x7x.onrender.com' || '' }}
 
   # Deploy to Render
   deploy:
