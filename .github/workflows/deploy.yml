@@ -55,7 +55,7 @@ jobs:
       working-directory: ./crypto-tracker-frontend
       run: npm run build
       env:
-        VITE_API_URL: https://crypto-tracker-backend.onrender.com
+        VITE_API_URL: https://crypto-tracker-backend-8x7x.onrender.com
 
     - name: ✅ Test Backend Health
       working-directory: ./crypto-tracker-backend
