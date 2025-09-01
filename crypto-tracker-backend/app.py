@@ -26,8 +26,12 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Secure CORS configuration - only allow frontend origin
-CORS(app, origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"], 
+# Secure CORS configuration - get origins from environment variable
+cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://localhost:3000')
+cors_origins_list = [origin.strip() for origin in cors_origins.split(',')]
+logger.info(f"CORS origins configured: {cors_origins_list}")
+
+CORS(app, origins=cors_origins_list, 
      methods=["GET", "POST", "PUT", "DELETE"],
      allow_headers=["Content-Type", "Authorization", "expires", "cache-control", "pragma"])
 
