@@ -6,7 +6,7 @@ A modern, full-stack cryptocurrency portfolio tracking application with real-tim
 ![Docker](https://img.shields.io/badge/Docker-Enabled-blue)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-green)
 ![Deploy](https://img.shields.io/badge/Deploy-Render-purple)
-
+[![🚀 Deploy Crypto Tracker](https://github.com/Iddrisu08/crypto-tracker-app/actions/workflows/deploy.yml/badge.svg)](https://github.com/Iddrisu08/crypto-tracker-app/actions/workflows/deploy.yml)
 ## ✨ Features
 
 ### 📊 Core Functionality
