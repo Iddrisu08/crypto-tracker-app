@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd crypto-tracker-frontend && npm run build",
+  "outputDirectory": "crypto-tracker-frontend/dist",
+  "installCommand": "cd crypto-tracker-frontend && npm install",
+  "env": {
+    "VITE_API_URL": "https://crypto-tracker-backend-8x7x.onrender.com"
+  }
+}
